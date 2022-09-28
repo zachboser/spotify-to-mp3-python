@@ -7,34 +7,33 @@ import spotipy.oauth2 as oauth2
 import yt_dlp
 from youtube_search import YoutubeSearch
 
+def write_track_page(outfile, tracks):
+    for item in tracks['items']:
+        if 'track' in item:
+            track = item['track']
+        else:
+            track = item
+        try:
+            track_url = track['external_urls']['spotify']
+            track_name = track['name']
+            track_artist = track['artists'][0]['name']
+            csv_line = track_name + "," + track_artist + "," + track_url + "\n"
+            try:
+                outfile.write(csv_line)
+            except UnicodeEncodeError:  # Most likely caused by non-English song names
+                print("Track named {} failed due to an encoding error. This is \
+                    most likely due to this song having a non-English name.".format(track_name))
+        except KeyError:
+                print(u'Skipping track {0} by {1} (local only?)'.format(
+                        track['name'], track['artists'][0]['name']))
+
 def write_tracks(text_file: str, tracks: dict):
     # Writes the information of all tracks in the playlist to a text file. 
     # This includins the name, artist, and spotify URL. Each is delimited by a comma.
-    with open(text_file, 'w+', encoding='utf-8') as file_out:
-        while True:
-            for item in tracks['items']:
-                if 'track' in item:
-                    track = item['track']
-                else:
-                    track = item
-                try:
-                    track_url = track['external_urls']['spotify']
-                    track_name = track['name']
-                    track_artist = track['artists'][0]['name']
-                    csv_line = track_name + "," + track_artist + "," + track_url + "\n"
-                    try:
-                        file_out.write(csv_line)
-                    except UnicodeEncodeError:  # Most likely caused by non-English song names
-                        print("Track named {} failed due to an encoding error. This is \
-                            most likely due to this song having a non-English name.".format(track_name))
-                except KeyError:
-                    print(u'Skipping track {0} by {1} (local only?)'.format(
-                            track['name'], track['artists'][0]['name']))
-            # 1 page = 50 results, check if there are more pages
-            if tracks['next']:
-                tracks = spotify.next(tracks)
-            else:
-                break
+    with open(text_file, 'w+', encoding='utf-8') as outfile:
+        while tracks['next']:
+            write_track_page(outfile, tracks)
+            tracks = spotify.next(tracks)
 
 def write_playlist(username: str, playlist_id: str):
     results = spotify.user_playlist(username, playlist_id, fields='tracks,next,name')
@@ -68,6 +67,7 @@ def find_and_download_songs(reference_file: str):
                 continue
             # Run you-get to fetch and download the link's audio
             print("Initiating download for {}.".format(text_to_search))
+            # this is what is fucking up - fix this so that it downloads in mp3
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'postprocessors': [{

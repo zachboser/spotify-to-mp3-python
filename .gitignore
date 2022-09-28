@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# the random playlist I just downloaded
+Dub Reggae/
+
 # C extensions
 *.so
 
