@@ -65,17 +65,23 @@ def download_youtube_mp3_from_video_id(url, reference_file):
         print(f"video {url} is longer than 20 minutes, will not download.")
         return
 
-    video = yt.streams.filter(only_audio=True).first()
+    try: video = yt.streams.filter(only_audio=True).first()
+    except:
+        print(f'Unable to get title for video {url}. Skipping download.')
+        return
 
     try: song_title_raw = yt.title
     except:
         print(f'Unable to get title for video {url}. Skipping download.')
         return
-        
+
     song_title = re.sub('\W+',' ', song_title_raw).lower().strip()
+    if 'Video Not Available' or 'video not available' in song_title:
+        return
+        
     song_path = f"{song_title}"
 
-    download_path = f"{reference_file}/{song_path}"
+    download_path = f"{song_path}"
     out_file = video.download(download_path)
 
     # save the file (which will be mp4 format)
@@ -83,7 +89,7 @@ def download_youtube_mp3_from_video_id(url, reference_file):
     new_file = base + '.mp3'
     os.rename(out_file, new_file)
 
-    # move the mp3 to the root dir
+    # move the mp3 to the root dir - why are we doing this?
     p = Path(new_file).absolute()
     parent_dir = p.parents[1]
     p.rename(parent_dir / p.name)
@@ -132,6 +138,7 @@ if __name__ == "__main__":
     print("Please read README.md for use instructions.")
     username = 'Mochary' # input("Spotify username: ")
     playlist_uri = input("Playlist URI/Link: ")
+    playlist_uri = re.split("playlist/|\?",playlist_uri)[1]
     if playlist_uri.find("https://open.spotify.com/playlist/") != -1:
         playlist_uri = playlist_uri.replace("https://open.spotify.com/playlist/", "")
     auth_manager = oauth2.SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
