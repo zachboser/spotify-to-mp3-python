@@ -1,5 +1,5 @@
 # Downloads a Spotify playlist into a folder of MP3 tracks
-# Jason Chen, 21 June 2020
+# Jason Chen, 21 June 2020 - Updated by Zachary B 24/10/22
 
 import os
 import spotipy
@@ -48,7 +48,7 @@ def write_playlist(username: str, playlist_id: str):
     write_tracks(text_file, tracks)
     return playlist_name
 
-def download_youtube_mp3_from_video_id(url, reference_file):
+def download_youtube_mp3_from_video_id(url):
     yt = YouTube(url)
     status = yt.vid_info['playabilityStatus']['status']
     if status == "UNPLAYABLE":
@@ -62,7 +62,7 @@ def download_youtube_mp3_from_video_id(url, reference_file):
 
     # create condition - if the yt.length > 600 (10 mins), then don't download it
     if yt.length > 1800:
-        print(f"video {url} is longer than 20 minutes, will not download.")
+        print(f"video {url} is longer than 20 minutes. Skipping download.")
         return
 
     try: video = yt.streams.filter(only_audio=True).first()
@@ -76,16 +76,19 @@ def download_youtube_mp3_from_video_id(url, reference_file):
         return
 
     song_title = re.sub('\W+',' ', song_title_raw).lower().strip()
-    if 'Video Not Available' or 'video not available' in song_title:
-        return
-        
-    song_path = f"{song_title}"
-
-    download_path = f"{song_path}"
-    out_file = video.download(download_path)
-
+    
+    out_file = video.download(f"{song_title}")
+    
+    download_path = f"{song_title}"
+    
     # save the file (which will be mp4 format)
     base, ext = os.path.splitext(out_file)
+
+    if "Video Not Available" in base:
+        print("video not available")
+        os.rmdir(download_path)
+        return
+
     new_file = base + '.mp3'
     os.rename(out_file, new_file)
 
@@ -97,14 +100,8 @@ def download_youtube_mp3_from_video_id(url, reference_file):
     # delete the child dir
     os.rmdir(download_path)
 
-    # rename the mp3 to remove the bad chars
-    source_name = f"{song_title_raw}.mp3"
-    dest_name = f"{song_path}.mp3"
-    try: os.rename(source_name,dest_name)
-    except: print(f"Failed to rename the file: {song_title_raw}")
-
     # result of success
-    print(f"{song_path} has been successfully downloaded. Video url: {url}")
+    print(f"{song_title} has been successfully downloaded. Video url: {url}")
 
 def find_and_download_songs(reference_file: str, playlist_name):
     TOTAL_ATTEMPTS = 10
@@ -131,7 +128,7 @@ def find_and_download_songs(reference_file: str, playlist_name):
 
             # Run you-get to fetch and download the link's audio
             print("Initiating download for {}.".format(text_to_search))
-            download_youtube_mp3_from_video_id(best_url, playlist_name)
+            download_youtube_mp3_from_video_id(best_url)
 
 if __name__ == "__main__":
     # Parameters
