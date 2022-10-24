@@ -9,6 +9,7 @@ from pathlib import Path
 from youtube_search import YoutubeSearch
 from pytube import YouTube
 from keys import client_id, client_secret
+import shutil
 
 def write_track_page(outfile, tracks):
     for item in tracks['items']:
@@ -86,7 +87,7 @@ def download_youtube_mp3_from_video_id(url):
 
     if "Video Not Available" in base:
         print("video not available")
-        os.rmdir(download_path)
+        shutil.rmtree(download_path)
         return
 
     new_file = base + '.mp3'
