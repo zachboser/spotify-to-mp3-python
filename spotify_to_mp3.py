@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from youtube_search import YoutubeSearch
 from pytube import YouTube
-from keys import client_id, client_secret
+from keys import client_id, client_secret, spotify_username
 import shutil
 
 def write_track_page(outfile, tracks):
@@ -134,7 +134,7 @@ def find_and_download_songs(reference_file: str, playlist_name):
 if __name__ == "__main__":
     # Parameters
     print("Please read README.md for use instructions.")
-    username = 'Mochary' # input("Spotify username: ")
+    username = spotify_username
     playlist_uri = input("Playlist URI/Link: ")
     playlist_uri = re.split("playlist/|\?",playlist_uri)[1]
     if playlist_uri.find("https://open.spotify.com/playlist/") != -1:
